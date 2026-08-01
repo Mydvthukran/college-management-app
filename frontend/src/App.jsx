@@ -7,6 +7,7 @@ import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import TeacherDashboard from './pages/TeacherDashboard';
+import OrganizerDashboard from './pages/OrganizerDashboard';
 import JudgingPanel from './pages/JudgingPanel';
 import Navbar from './components/Navbar';
 import AIChatbot from './components/AIChatbot';
@@ -21,6 +22,7 @@ const AnimatedRoutes = () => {
         <Route path="/dashboard" element={<PageWrapper><Dashboard /></PageWrapper>} />
         <Route path="/admin" element={<PageWrapper><AdminDashboard /></PageWrapper>} />
         <Route path="/teacher" element={<PageWrapper><TeacherDashboard /></PageWrapper>} />
+        <Route path="/organizer" element={<PageWrapper><OrganizerDashboard /></PageWrapper>} />
         <Route path="/judge" element={<PageWrapper><JudgingPanel /></PageWrapper>} />
       </Routes>
 

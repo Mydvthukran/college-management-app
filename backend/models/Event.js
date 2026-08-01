@@ -17,7 +17,19 @@ const eventSchema = new mongoose.Schema({
   venueId: { type: mongoose.Schema.Types.ObjectId, ref: 'Venue' },
   assetsRequested: [{ type: String }], // e.g. ["2 Mics", "1 Projector"]
   budget: { type: Number },
-  poster: { type: String },
+  category: { 
+    type: String, 
+    enum: ['Workshop', 'Seminar', 'Hackathon', 'Sports', 'Cultural', 'Fest'],
+    default: 'Workshop'
+  },
+  capacityLimit: { type: Number },
+  registrationDeadline: { type: Date },
+  eventStatus: {
+    type: String,
+    enum: ['Upcoming', 'Ongoing', 'Completed'],
+    default: 'Upcoming'
+  },
+  posterUrl: { type: String }, // Cloudinary URL
   photoGallery: [{ type: String }], // Auto-collated photos for NAAC report
 }, { timestamps: true });
 

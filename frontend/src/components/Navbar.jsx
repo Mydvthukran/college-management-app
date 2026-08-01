@@ -9,6 +9,7 @@ const Navbar = () => {
     { path: '/', label: 'Home' },
     { path: '/dashboard', label: 'Student Dashboard' },
     { path: '/teacher', label: 'Faculty Portal' },
+    { path: '/organizer', label: 'Organizer Panel' },
     { path: '/judge', label: 'Judge Panel' }
   ];
 
