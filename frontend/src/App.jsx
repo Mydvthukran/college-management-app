@@ -3,7 +3,9 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import { AnimatePresence, motion } from 'framer-motion';
 import Lenis from 'lenis';
 
-import Home from './pages/Home';
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/AdminDashboard';
@@ -19,15 +21,44 @@ const AnimatedRoutes = () => {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
+        {/* Public route — Login */}
         <Route path="/" element={<PageWrapper><Login /></PageWrapper>} />
-        <Route path="/home" element={<PageWrapper><Home /></PageWrapper>} />
-        <Route path="/dashboard" element={<PageWrapper><Dashboard /></PageWrapper>} />
-        <Route path="/admin" element={<PageWrapper><AdminDashboard /></PageWrapper>} />
-        <Route path="/teacher" element={<PageWrapper><TeacherDashboard /></PageWrapper>} />
-        <Route path="/organizer" element={<PageWrapper><OrganizerDashboard /></PageWrapper>} />
-        <Route path="/judge" element={<PageWrapper><JudgingPanel /></PageWrapper>} />
-      </Routes>
 
+        {/* Student dashboard — Students, Club Leads, and Admins */}
+        <Route path="/dashboard" element={
+          <ProtectedRoute allowedRoles={['Student', 'Club Lead', 'Admin']}>
+            <PageWrapper><Dashboard /></PageWrapper>
+          </ProtectedRoute>
+        } />
+
+        {/* Admin dashboard — Admins only */}
+        <Route path="/admin" element={
+          <ProtectedRoute allowedRoles={['Admin']}>
+            <PageWrapper><AdminDashboard /></PageWrapper>
+          </ProtectedRoute>
+        } />
+
+        {/* Teacher dashboard — Teachers and Admins */}
+        <Route path="/teacher" element={
+          <ProtectedRoute allowedRoles={['Teacher', 'Admin']}>
+            <PageWrapper><TeacherDashboard /></PageWrapper>
+          </ProtectedRoute>
+        } />
+
+        {/* Organizer dashboard — Organizers and Admins */}
+        <Route path="/organizer" element={
+          <ProtectedRoute allowedRoles={['Organizer', 'Admin']}>
+            <PageWrapper><OrganizerDashboard /></PageWrapper>
+          </ProtectedRoute>
+        } />
+
+        {/* Judging panel — Organizers and Admins */}
+        <Route path="/judge" element={
+          <ProtectedRoute allowedRoles={['Organizer', 'Admin']}>
+            <PageWrapper><JudgingPanel /></PageWrapper>
+          </ProtectedRoute>
+        } />
+      </Routes>
     </AnimatePresence>
   );
 };
@@ -66,14 +97,16 @@ function App() {
 
   return (
     <Router>
-      <div className="min-h-screen relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] -z-10 opacity-20"></div>
-        <Navbar />
-        <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
-          <AnimatedRoutes />
-        </main>
-        <AIChatbot />
-      </div>
+      <AuthProvider>
+        <div className="min-h-screen relative overflow-hidden">
+          <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] -z-10 opacity-20"></div>
+          <Navbar />
+          <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
+            <AnimatedRoutes />
+          </main>
+          <AIChatbot />
+        </div>
+      </AuthProvider>
     </Router>
   );
 }
