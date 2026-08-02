@@ -15,6 +15,7 @@ import OrganizerDashboard from './pages/OrganizerDashboard';
 import JudgingPanel from './pages/JudgingPanel';
 import Navbar from './components/Navbar';
 import AIChatbot from './components/AIChatbot';
+import ParticleBackground from './components/ParticleBackground';
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -107,11 +108,8 @@ function App() {
     <Router>
       <AuthProvider>
         <div className="min-h-screen relative overflow-hidden bg-background text-white">
-          {/* Animated Ambient Background */}
+          <ParticleBackground />
           <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-            <div className="absolute top-[-10%] left-[-10%] w-[40rem] h-[40rem] bg-purple-600/20 rounded-full mix-blend-screen blur-[100px] animate-blob"></div>
-            <div className="absolute top-[20%] right-[-10%] w-[35rem] h-[35rem] bg-blue-600/20 rounded-full mix-blend-screen blur-[100px] animate-blob animation-delay-2000"></div>
-            <div className="absolute bottom-[-20%] left-[20%] w-[45rem] h-[45rem] bg-pink-600/20 rounded-full mix-blend-screen blur-[100px] animate-blob animation-delay-4000"></div>
             <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] opacity-20"></div>
           </div>
           
