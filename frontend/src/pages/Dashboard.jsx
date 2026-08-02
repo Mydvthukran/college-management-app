@@ -1,8 +1,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, CheckCircle, Clock, QrCode } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const Dashboard = () => {
+  const { user } = useAuth();
+
   return (
     <div className="space-y-8">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
@@ -12,7 +15,7 @@ const Dashboard = () => {
             animate={{ opacity: 1, x: 0 }}
             className="text-3xl font-bold mb-2"
           >
-            Welcome back, <span className="text-primary">John Doe</span>
+            Welcome back, <span className="text-primary">{user?.name || 'Student'}</span>
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, x: -20 }}
@@ -20,7 +23,7 @@ const Dashboard = () => {
             transition={{ delay: 0.1 }}
             className="text-gray-400"
           >
-            B.Tech CSE • 3rd Year
+            {user?.branch ? `B.Tech ${user.branch}` : 'Student Dashboard'}
           </motion.p>
         </div>
       </header>
@@ -79,11 +82,10 @@ const Dashboard = () => {
             <h3 className="text-lg font-bold mb-2">Your Entry Pass</h3>
             <p className="text-xs text-gray-400 mb-6">Scan at the venue for instant entry & attendance</p>
             <div className="w-48 h-48 bg-white rounded-xl p-2 flex items-center justify-center mb-6">
-              {/* Placeholder for QR Code */}
               <QrCode size={120} className="text-black" />
             </div>
             <p className="text-sm font-mono text-gray-300 bg-surface px-4 py-1.5 rounded-full border border-white/5">
-              ID: SIET-2026-8901
+              ID: {user?.qrData || 'SIET-0000'}
             </p>
           </div>
 
