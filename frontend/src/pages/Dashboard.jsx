@@ -1,19 +1,65 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, CheckCircle, Clock, BookOpen, Bell, User, Award, TrendingUp } from 'lucide-react';
+import { Calendar, CheckCircle, Clock, BookOpen, Bell, User as UserIcon, Award, TrendingUp } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useAuth } from '../context/AuthContext';
+import { api } from '../utils/api';
 
 const Dashboard = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('schedule');
+  
+  const [stats, setStats] = useState(null);
+  const [myEvents, setMyEvents] = useState([]);
+  const [recommended, setRecommended] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [registering, setRegistering] = useState(false);
+
+  const fetchDashboardData = async () => {
+    setLoading(true);
+    try {
+      const [statsRes, myEventsRes, recommendedRes] = await Promise.all([
+        api.get('/dashboard/stats'),
+        api.get('/dashboard/my-events'),
+        api.get('/dashboard/recommended')
+      ]);
+      setStats(statsRes);
+      setMyEvents(myEventsRes);
+      setRecommended(recommendedRes);
+    } catch (error) {
+      console.error("Error fetching student dashboard:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const handleRegister = async (eventId) => {
+    try {
+      setRegistering(true);
+      await api.post(`/events/${eventId}/register`);
+      await fetchDashboardData(); // Refresh data after registration
+      alert('Registered successfully!');
+    } catch (error) {
+      alert(error.message || 'Failed to register');
+    } finally {
+      setRegistering(false);
+    }
+  };
 
   const tabs = [
     { id: 'schedule', label: 'My Schedule', icon: <Calendar size={16} /> },
     { id: 'events', label: 'Events & Clubs', icon: <BookOpen size={16} /> },
     { id: 'pass', label: 'Entry Pass', icon: <Award size={16} /> },
-    { id: 'profile', label: 'My Profile', icon: <User size={16} /> },
+    { id: 'profile', label: 'My Profile', icon: <UserIcon size={16} /> },
   ];
+
+  if (loading && !stats) {
+    return <div className="flex justify-center items-center h-64 text-primary">Loading dashboard...</div>;
+  }
 
   return (
     <div className="space-y-8">
@@ -46,10 +92,10 @@ const Dashboard = () => {
       {/* Quick Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Events Attended', value: '12', icon: <Calendar size={18} />, color: 'text-blue-400', bg: 'bg-blue-500/10' },
-          { label: 'Certificates', value: '5', icon: <Award size={18} />, color: 'text-green-400', bg: 'bg-green-500/10' },
-          { label: 'Attendance', value: '87%', icon: <TrendingUp size={18} />, color: 'text-purple-400', bg: 'bg-purple-500/10' },
-          { label: 'Notifications', value: '3', icon: <Bell size={18} />, color: 'text-amber-400', bg: 'bg-amber-500/10' },
+          { label: 'Events Attended', value: stats?.eventsAttended || 0, icon: <Calendar size={18} />, color: 'text-blue-400', bg: 'bg-blue-500/10' },
+          { label: 'Certificates', value: stats?.certificates || 0, icon: <Award size={18} />, color: 'text-green-400', bg: 'bg-green-500/10' },
+          { label: 'Attendance', value: `${stats?.attendancePct || 0}%`, icon: <TrendingUp size={18} />, color: 'text-purple-400', bg: 'bg-purple-500/10' },
+          { label: 'Notifications', value: '0', icon: <Bell size={18} />, color: 'text-amber-400', bg: 'bg-amber-500/10' }, // Hardcoded for now
         ].map((stat, i) => (
           <motion.div 
             key={i}
@@ -88,90 +134,82 @@ const Dashboard = () => {
       {activeTab === 'schedule' && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
           <h2 className="text-xl font-semibold flex items-center gap-2">
-            <Calendar className="text-primary" /> Upcoming Events
+            <Calendar className="text-primary" /> Upcoming Events (Registered)
           </h2>
-          <div className="space-y-4">
-            {[
-              { title: 'Advanced Web Dev Workshop', time: 'Tomorrow, 10:00 AM', venue: 'Main Auditorium', tag: 'Workshop' },
-              { title: 'AI/ML Bootcamp Day 2', time: 'Aug 5, 2:00 PM', venue: 'Seminar Hall A', tag: 'Bootcamp' },
-              { title: 'Inter-College Hackathon', time: 'Aug 8, 9:00 AM', venue: 'CS Lab Complex', tag: 'Hackathon' },
-            ].map((event, i) => (
-              <div key={i} className="glass-panel p-6 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between hover:border-primary/30 transition-colors">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-bold uppercase tracking-wider text-primary">{event.time}</span>
-                    <span className="text-xs bg-surface px-2 py-0.5 rounded-full border border-white/10">{event.tag}</span>
+          {myEvents.filter(e => e.eventStatus === 'Upcoming' || e.eventStatus === 'Ongoing').length === 0 ? (
+            <p className="text-gray-500 italic p-4 glass-panel">You have no upcoming registered events.</p>
+          ) : (
+            <div className="space-y-4">
+              {myEvents.filter(e => e.eventStatus === 'Upcoming' || e.eventStatus === 'Ongoing').map((event, i) => (
+                <div key={event._id} className="glass-panel p-6 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between hover:border-primary/30 transition-colors">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-bold uppercase tracking-wider text-primary">
+                        {new Date(event.date).toLocaleDateString()} {event.startTime}
+                      </span>
+                      <span className="text-xs bg-surface px-2 py-0.5 rounded-full border border-white/10">{event.category}</span>
+                    </div>
+                    <h3 className="text-lg font-bold">{event.title}</h3>
+                    <p className="text-sm text-gray-400 mt-1 flex items-center gap-2">
+                      <Clock size={14} /> {event.venue}
+                    </p>
                   </div>
-                  <h3 className="text-lg font-bold">{event.title}</h3>
-                  <p className="text-sm text-gray-400 mt-1 flex items-center gap-2">
-                    <Clock size={14} /> {event.venue}
-                  </p>
+                  <button className="px-4 py-2 bg-surface border border-white/10 rounded-lg text-sm hover:bg-white/5 transition-colors">
+                    View Details
+                  </button>
                 </div>
-                <button className="px-4 py-2 bg-surface border border-white/10 rounded-lg text-sm hover:bg-white/5 transition-colors">
-                  View Details
-                </button>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
           {/* Recommendations */}
           <h2 className="text-xl font-semibold flex items-center gap-2 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400 pt-4">
             ✨ Recommended for You
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[
-              { title: 'HackTheCampus 2026', desc: 'Join the 48-hour coding marathon with prizes worth ₹50K.', tag: 'Hackathon' },
-              { title: 'Flutter Workshop', desc: 'Build cross-platform mobile apps from scratch.', tag: 'Workshop' },
-              { title: 'Robotics Club Meet', desc: 'Weekly meetup — learn Arduino and IoT basics.', tag: 'Club' },
-            ].map((item, i) => (
-              <div key={i} className="glass-panel p-5 relative overflow-hidden group">
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <span className="text-xs font-bold text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded">{item.tag}</span>
-                <h3 className="text-lg font-bold mt-2 mb-1">{item.title}</h3>
-                <p className="text-sm text-gray-400 mb-4">{item.desc}</p>
-                <button className="text-primary text-sm font-semibold hover:underline">Register Now →</button>
-              </div>
-            ))}
-          </div>
+          {recommended.length === 0 ? (
+            <p className="text-gray-500 italic p-4 glass-panel">No recommendations right now.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {recommended.map((item, i) => (
+                <div key={item._id} className="glass-panel p-5 relative overflow-hidden group">
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-xs font-bold text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded">{item.category}</span>
+                    <span className="text-xs text-gray-400">{new Date(item.date).toLocaleDateString()}</span>
+                  </div>
+                  <h3 className="text-lg font-bold mb-1">{item.title}</h3>
+                  <p className="text-sm text-gray-400 mb-4 line-clamp-2">{item.description}</p>
+                  <button 
+                    onClick={() => handleRegister(item._id)}
+                    disabled={registering}
+                    className="text-primary text-sm font-semibold hover:underline disabled:opacity-50"
+                  >
+                    {registering ? 'Registering...' : 'Register Now →'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </motion.div>
       )}
 
       {activeTab === 'events' && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-          <h2 className="text-xl font-semibold">Registered Events</h2>
+          <h2 className="text-xl font-semibold">Registered Events History</h2>
           <div className="space-y-3">
-            {[
-              { title: 'Tech Symposium 2026', date: 'Oct 15', status: 'Confirmed', statusColor: 'text-green-400 bg-green-500/10 border-green-500/30' },
-              { title: 'Code Sprint Challenge', date: 'Oct 20', status: 'Waitlisted', statusColor: 'text-amber-400 bg-amber-500/10 border-amber-500/30' },
-              { title: 'UI/UX Design Jam', date: 'Oct 25', status: 'Confirmed', statusColor: 'text-green-400 bg-green-500/10 border-green-500/30' },
-            ].map((event, i) => (
-              <div key={i} className="glass-panel p-5 flex justify-between items-center">
+            {myEvents.map((event, i) => (
+              <div key={event._id} className="glass-panel p-5 flex justify-between items-center">
                 <div>
                   <h3 className="font-bold">{event.title}</h3>
-                  <p className="text-sm text-gray-400">{event.date}</p>
+                  <p className="text-sm text-gray-400">{new Date(event.date).toLocaleDateString()}</p>
                 </div>
-                <span className={`text-xs font-semibold px-3 py-1 rounded-full border ${event.statusColor}`}>{event.status}</span>
-              </div>
-            ))}
-          </div>
-
-          <h2 className="text-xl font-semibold pt-4">Clubs You Follow</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[
-              { name: 'Coding Club', members: 245, desc: 'Competitive programming and hackathons' },
-              { name: 'Robotics Club', members: 120, desc: 'Arduino, IoT and embedded systems' },
-              { name: 'Design Club', members: 89, desc: 'UI/UX design and creative projects' },
-              { name: 'AI/ML Society', members: 178, desc: 'Machine learning and data science' },
-            ].map((club, i) => (
-              <div key={i} className="glass-panel p-5 flex justify-between items-center">
-                <div>
-                  <h3 className="font-bold">{club.name}</h3>
-                  <p className="text-xs text-gray-400">{club.desc}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-bold text-primary">{club.members}</p>
-                  <p className="text-xs text-gray-500">members</p>
-                </div>
+                <span className={`text-xs font-semibold px-3 py-1 rounded-full border ${
+                  event.checkedIn 
+                    ? 'text-green-400 bg-green-500/10 border-green-500/30' 
+                    : 'text-amber-400 bg-amber-500/10 border-amber-500/30'
+                }`}>
+                  {event.checkedIn ? 'Attended' : 'Registered'}
+                </span>
               </div>
             ))}
           </div>
@@ -212,20 +250,19 @@ const Dashboard = () => {
               <h3 className="text-lg font-bold flex items-center gap-2">
                 <CheckCircle className="text-green-400" size={18} /> Your Certificates
               </h3>
-              {[
-                { title: 'React Masterclass', date: 'Sep 12, 2026', org: 'Coding Club' },
-                { title: 'AI/ML Bootcamp', date: 'Aug 28, 2026', org: 'AI Society' },
-                { title: 'Web Dev Workshop', date: 'Aug 15, 2026', org: 'GDSC SIET' },
-                { title: 'Intro to Cloud Computing', date: 'Jul 20, 2026', org: 'AWS Club' },
-              ].map((cert, i) => (
-                <div key={i} className="glass-panel p-4 flex items-center justify-between hover:border-green-500/20 transition-colors cursor-pointer">
-                  <div>
-                    <p className="font-semibold text-sm">{cert.title}</p>
-                    <p className="text-xs text-gray-500">{cert.date} • {cert.org}</p>
+              {myEvents.filter(e => e.certificateGenerated).length === 0 ? (
+                <p className="text-gray-500 italic p-4 glass-panel">No certificates earned yet.</p>
+              ) : (
+                myEvents.filter(e => e.certificateGenerated).map((cert, i) => (
+                  <div key={cert._id} className="glass-panel p-4 flex items-center justify-between hover:border-green-500/20 transition-colors cursor-pointer">
+                    <div>
+                      <p className="font-semibold text-sm">{cert.title}</p>
+                      <p className="text-xs text-gray-500">{new Date(cert.date).toLocaleDateString()}</p>
+                    </div>
+                    <button className="text-xs text-primary hover:underline font-medium">Download</button>
                   </div>
-                  <button className="text-xs text-primary hover:underline font-medium">Download</button>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </motion.div>
@@ -257,34 +294,31 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Interests */}
+            {/* Interests & History */}
             <div className="glass-panel p-6 md:col-span-2">
               <h3 className="font-bold mb-4">Your Interests</h3>
               <div className="flex flex-wrap gap-2 mb-6">
-                {(user?.interests || ['Coding', 'Hackathons', 'AI/ML', 'Web Dev']).map((tag, i) => (
-                  <span key={i} className="text-xs bg-primary/10 text-primary border border-primary/20 px-3 py-1.5 rounded-full font-medium">{tag}</span>
+                {(user?.interests?.length > 0 ? user.interests : ['Coding', 'Hackathons', 'AI/ML']).map((tag, i) => (
+                  <span key={i} className="text-xs bg-primary/10 text-primary border border-primary/20 px-3 py-1.5 rounded-full font-medium capitalize">{tag}</span>
                 ))}
               </div>
 
-              <h3 className="font-bold mb-4 mt-6">Attendance History</h3>
+              <h3 className="font-bold mb-4 mt-6">Recent Attendance</h3>
               <div className="space-y-2">
-                {[
-                  { event: 'Web Dev Workshop', date: 'Oct 12', status: 'Present' },
-                  { event: 'AI Seminar', date: 'Oct 10', status: 'Present' },
-                  { event: 'Robotics Demo Day', date: 'Oct 8', status: 'Absent' },
-                  { event: 'Code Sprint', date: 'Oct 5', status: 'Present' },
-                  { event: 'Design Thinking Workshop', date: 'Oct 1', status: 'Present' },
-                ].map((record, i) => (
-                  <div key={i} className="flex justify-between items-center p-3 rounded-lg bg-surface/50 border border-white/5">
+                {myEvents.filter(e => e.checkedIn).slice(0, 5).map((record, i) => (
+                  <div key={record._id} className="flex justify-between items-center p-3 rounded-lg bg-surface/50 border border-white/5">
                     <div>
-                      <p className="text-sm font-medium">{record.event}</p>
-                      <p className="text-xs text-gray-500">{record.date}</p>
+                      <p className="text-sm font-medium">{record.title}</p>
+                      <p className="text-xs text-gray-500">{new Date(record.date).toLocaleDateString()}</p>
                     </div>
-                    <span className={`text-xs font-semibold px-2 py-1 rounded ${record.status === 'Present' ? 'text-green-400 bg-green-500/10' : 'text-red-400 bg-red-500/10'}`}>
-                      {record.status}
+                    <span className="text-xs font-semibold px-2 py-1 rounded text-green-400 bg-green-500/10">
+                      Present
                     </span>
                   </div>
                 ))}
+                {myEvents.filter(e => e.checkedIn).length === 0 && (
+                  <p className="text-gray-500 text-sm italic">No attendance records yet.</p>
+                )}
               </div>
             </div>
           </div>

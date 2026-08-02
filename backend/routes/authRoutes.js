@@ -42,4 +42,17 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// @route   GET /api/auth/users
+// @desc    Get all users (Admin only)
+// @access  Private
+router.get('/users', async (req, res) => {
+  try {
+    // In a real app, verify Admin JWT here
+    const users = await User.find().select('-password').sort({ createdAt: -1 });
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;
