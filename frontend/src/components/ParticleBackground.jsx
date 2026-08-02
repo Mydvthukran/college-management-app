@@ -21,14 +21,17 @@ const ParticleBackground = () => {
       constructor() {
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
-        this.vx = (Math.random() - 0.5) * 0.5; // slow speed
-        this.vy = (Math.random() - 0.5) * 0.5;
-        this.radius = Math.random() * 2 + 1;
-        // Random color between blue and purple
-        const r = Math.floor(Math.random() * 50) + 100;
-        const g = Math.floor(Math.random() * 50) + 100;
-        const b = Math.floor(Math.random() * 100) + 155;
-        this.color = `rgba(${r}, ${g}, ${b}, ${Math.random() * 0.5 + 0.2})`;
+        this.vx = (Math.random() - 0.5) * 0.8; // slightly faster
+        this.vy = (Math.random() - 0.5) * 0.8;
+        this.radius = Math.random() * 3 + 1.5; // bigger radius
+        // Random vibrant color (Cyan, Blue, Purple, White)
+        const colors = [
+          `rgba(0, 255, 255, ${Math.random() * 0.6 + 0.4})`, // Cyan
+          `rgba(100, 150, 255, ${Math.random() * 0.6 + 0.4})`, // Blue
+          `rgba(200, 100, 255, ${Math.random() * 0.6 + 0.4})`, // Purple
+          `rgba(255, 255, 255, ${Math.random() * 0.6 + 0.4})`  // White
+        ];
+        this.color = colors[Math.floor(Math.random() * colors.length)];
       }
 
       update() {
@@ -64,10 +67,11 @@ const ParticleBackground = () => {
           const dy = particles[a].y - particles[b].y;
           const distance = Math.sqrt(dx * dx + dy * dy);
 
-          if (distance < 120) {
-            opacityValue = 1 - (distance / 120);
-            ctx.strokeStyle = `rgba(100, 150, 255, ${opacityValue * 0.2})`;
-            ctx.lineWidth = 1;
+          if (distance < 150) { // Increased connection distance
+            opacityValue = 1 - (distance / 150);
+            // Bright cyan/blue lines
+            ctx.strokeStyle = `rgba(100, 200, 255, ${opacityValue * 0.6})`;
+            ctx.lineWidth = 1.5;
             ctx.beginPath();
             ctx.moveTo(particles[a].x, particles[a].y);
             ctx.lineTo(particles[b].x, particles[b].y);
@@ -80,6 +84,7 @@ const ParticleBackground = () => {
     // Animation loop
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.globalCompositeOperation = 'lighter'; // Glow effect
       
       for (let i = 0; i < particles.length; i++) {
         particles[i].update();
@@ -101,7 +106,7 @@ const ParticleBackground = () => {
   return (
     <canvas 
       ref={canvasRef} 
-      className="fixed inset-0 pointer-events-none z-0 opacity-60"
+      className="fixed inset-0 pointer-events-none z-0"
       style={{ background: 'transparent' }}
     />
   );

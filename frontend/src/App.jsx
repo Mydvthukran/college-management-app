@@ -108,10 +108,10 @@ function App() {
     <Router>
       <AuthProvider>
         <div className="min-h-screen relative overflow-hidden bg-background text-white">
-          <ParticleBackground />
           <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-            <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] opacity-20"></div>
+            <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] opacity-10"></div>
           </div>
+          <ParticleBackground />
           
           <div className="relative z-10">
             <Navbar />
