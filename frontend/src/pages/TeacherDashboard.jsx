@@ -209,7 +209,7 @@ const TeacherDashboard = () => {
                     <p className="text-sm text-gray-400">Date: {new Date(report.date).toLocaleDateString()} • {report.category}</p>
                   </div>
                   <a 
-                    href={`http://localhost:5000/api/teacher/export-report/${report._id}`}
+                    href={`https://college-management-app-guqk.onrender.com/api/teacher/export-report/${report._id}`}
                     target="_blank"
                     rel="noreferrer"
                     className="btn-secondary w-full flex items-center justify-center gap-2 text-sm py-2"

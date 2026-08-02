@@ -26,7 +26,7 @@ const Dashboard = () => {
   const handleDownloadCertificate = async (eventId, eventTitle) => {
     try {
       // Direct browser to the URL which will prompt a PDF download
-      window.open(`http://localhost:5000/api/events/${eventId}/certificate`, '_blank');
+      window.open(`https://college-management-app-guqk.onrender.com/api/events/${eventId}/certificate`, '_blank');
     } catch (error) {
       alert("Error downloading certificate");
     }
