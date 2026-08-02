@@ -97,7 +97,10 @@ const TeacherDashboard = () => {
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold">Pending Duty Leave Requests</h2>
             {dutyLeaves.length > 0 && (
-              <button className="btn-primary flex items-center gap-2 py-2 text-sm">
+              <button 
+                onClick={() => alert('Batch approval feature is coming soon. Please approve requests individually.')}
+                className="btn-primary flex items-center gap-2 py-2 text-sm"
+              >
                 <CheckCircle size={16} /> Batch Approve All
               </button>
             )}

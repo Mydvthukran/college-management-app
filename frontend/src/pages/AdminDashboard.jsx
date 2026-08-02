@@ -10,6 +10,10 @@ const AdminDashboard = () => {
   const [pendingApprovals, setPendingApprovals] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Settings State
+  const [allowRegistrations, setAllowRegistrations] = useState(true);
+  const [autoApprove, setAutoApprove] = useState(false);
 
   const fetchAdminData = async () => {
     try {
@@ -195,7 +199,12 @@ const AdminDashboard = () => {
         <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-bold">All Users</h2>
-            <button className="btn-primary py-2 text-sm">+ Add User</button>
+            <button 
+              onClick={() => alert("Please use the database seeding script or wait for the 'User Management' feature to be fully implemented.")}
+              className="btn-primary py-2 text-sm"
+            >
+              + Add User
+            </button>
           </div>
           <div className="glass-panel p-4 overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -232,11 +241,21 @@ const AdminDashboard = () => {
               <h3 className="font-bold">General</h3>
               <div className="flex justify-between items-center py-2 border-b border-white/5">
                 <div><p className="text-sm font-medium">Allow New Registrations</p><p className="text-xs text-gray-500">Users can self-register</p></div>
-                <div className="w-12 h-6 bg-green-500 rounded-full relative cursor-pointer"><div className="absolute right-0.5 top-0.5 w-5 h-5 bg-white rounded-full"></div></div>
+                <div 
+                  onClick={() => setAllowRegistrations(!allowRegistrations)}
+                  className={`w-12 h-6 rounded-full relative cursor-pointer transition-colors ${allowRegistrations ? 'bg-green-500' : 'bg-surface border border-white/20'}`}
+                >
+                  <div className={`absolute top-0.5 w-5 h-5 rounded-full transition-all ${allowRegistrations ? 'right-0.5 bg-white' : 'left-0.5 bg-gray-400'}`}></div>
+                </div>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-white/5">
                 <div><p className="text-sm font-medium">Auto-Approve Events</p><p className="text-xs text-gray-500">Skip manual approval</p></div>
-                <div className="w-12 h-6 bg-surface border border-white/20 rounded-full relative cursor-pointer"><div className="absolute left-0.5 top-0.5 w-5 h-5 bg-gray-400 rounded-full"></div></div>
+                <div 
+                  onClick={() => setAutoApprove(!autoApprove)}
+                  className={`w-12 h-6 rounded-full relative cursor-pointer transition-colors ${autoApprove ? 'bg-green-500' : 'bg-surface border border-white/20'}`}
+                >
+                  <div className={`absolute top-0.5 w-5 h-5 rounded-full transition-all ${autoApprove ? 'right-0.5 bg-white' : 'left-0.5 bg-gray-400'}`}></div>
+                </div>
               </div>
             </div>
             <div className="glass-panel p-6 space-y-4">

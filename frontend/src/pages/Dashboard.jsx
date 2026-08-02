@@ -154,7 +154,10 @@ const Dashboard = () => {
                       <Clock size={14} /> {event.venue}
                     </p>
                   </div>
-                  <button className="px-4 py-2 bg-surface border border-white/10 rounded-lg text-sm hover:bg-white/5 transition-colors">
+                  <button 
+                    onClick={() => alert(`Full details for ${event.title} will be available soon.`)}
+                    className="px-4 py-2 bg-surface border border-white/10 rounded-lg text-sm hover:bg-white/5 transition-colors"
+                  >
                     View Details
                   </button>
                 </div>
@@ -259,7 +262,12 @@ const Dashboard = () => {
                       <p className="font-semibold text-sm">{cert.title}</p>
                       <p className="text-xs text-gray-500">{new Date(cert.date).toLocaleDateString()}</p>
                     </div>
-                    <button className="text-xs text-primary hover:underline font-medium">Download</button>
+                    <button 
+                      onClick={() => alert('Certificate generation is currently disabled. Please contact your coordinator.')}
+                      className="text-xs text-primary hover:underline font-medium"
+                    >
+                      Download
+                    </button>
                   </div>
                 ))
               )}
