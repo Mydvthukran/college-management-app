@@ -19,7 +19,7 @@ const eventSchema = new mongoose.Schema({
   budget: { type: Number },
   category: { 
     type: String, 
-    enum: ['Workshop', 'Seminar', 'Hackathon', 'Sports', 'Cultural', 'Fest'],
+    enum: ['Workshop', 'Seminar', 'Hackathon', 'Sports', 'Cultural', 'Fest', 'Competition'],
     default: 'Workshop'
   },
   capacityLimit: { type: Number },

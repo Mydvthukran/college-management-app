@@ -22,6 +22,8 @@ const aiRoutes = require('./routes/aiRoutes');
 const teacherRoutes = require('./routes/teacherRoutes');
 const venueRoutes = require('./routes/venueRoutes');
 const judgingRoutes = require('./routes/judgingRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
+const announcementRoutes = require('./routes/announcementRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
@@ -29,6 +31,8 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/teacher', teacherRoutes);
 app.use('/api/venues', venueRoutes);
 app.use('/api/judging', judgingRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/announcements', announcementRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'API is running smooth!' });
