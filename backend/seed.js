@@ -21,34 +21,34 @@ const seedDatabase = async () => {
     const users = [
       {
         name: 'Student User',
-        email: 'student@nexus.edu',
+        email: 'student@siet.edu',
         password: passwordHash,
         role: 'Student',
         branch: 'CSE',
         interests: ['Coding', 'Hackathons'],
-        qrData: 'NXC-STUDENT'
+        qrData: 'SIET-STUDENT'
       },
       {
         name: 'Organizer User',
-        email: 'organizer@nexus.edu',
+        email: 'organizer@siet.edu',
         password: passwordHash,
         role: 'Organizer',
-        qrData: 'NXC-ORGANIZER'
+        qrData: 'SIET-ORGANIZER'
       },
       {
         name: 'Teacher User',
-        email: 'teacher@nexus.edu',
+        email: 'teacher@siet.edu',
         password: passwordHash,
         role: 'Teacher',
         branch: 'CSE',
-        qrData: 'NXC-TEACHER'
+        qrData: 'SIET-TEACHER'
       },
       {
         name: 'Admin User',
-        email: 'admin@nexus.edu',
+        email: 'admin@siet.edu',
         password: passwordHash,
         role: 'Admin',
-        qrData: 'NXC-ADMIN'
+        qrData: 'SIET-ADMIN'
       }
     ];
 

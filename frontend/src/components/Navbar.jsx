@@ -20,7 +20,7 @@ const Navbar = () => {
     <nav className="fixed top-0 w-full z-40 bg-background/80 backdrop-blur-md border-b border-white/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
         <Link to="/" className="text-2xl font-bold tracking-tighter text-white">
-          Nexus<span className="text-primary">.</span>
+          SIET<span className="text-primary">.</span>
         </Link>
         
         {/* Desktop Navigation */}

@@ -83,7 +83,7 @@ const Dashboard = () => {
               <QrCode size={120} className="text-black" />
             </div>
             <p className="text-sm font-mono text-gray-300 bg-surface px-4 py-1.5 rounded-full border border-white/5">
-              ID: NXC-2026-8901
+              ID: SIET-2026-8901
             </p>
           </div>
 

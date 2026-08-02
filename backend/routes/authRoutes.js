@@ -16,7 +16,7 @@ router.post('/register', async (req, res) => {
     
     // Generate a unique QR data string for the user (for Student role)
     if (role === 'Student') {
-      user.qrData = `NXC-${user._id.toString().slice(-4).toUpperCase()}`;
+      user.qrData = `SIET-${user._id.toString().slice(-4).toUpperCase()}`;
     }
     
     await user.save();
