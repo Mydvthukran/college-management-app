@@ -25,27 +25,28 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      // Mock login logic as requested
-      // We simulate a network delay
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: formData.email, password: formData.password })
+      });
 
-      if (formData.email && formData.password) {
-        // Create a mock user based on the inputs
-        const mockUser = {
-          id: 'mock-id-1234',
-          name: formData.email.split('@')[0],
-          role: formData.role,
-          qrData: `NXC-${formData.role.substring(0, 3).toUpperCase()}-MOCK`
-        };
+      const data = await response.json();
 
-        // Store token and user
-        localStorage.setItem('token', 'mock-jwt-token-xyz');
-        localStorage.setItem('user', JSON.stringify(mockUser));
+      if (!response.ok) {
+        throw new Error(data.error || 'Login failed');
+      }
 
-        // Redirect based on selected role
-        const userRole = formData.role;
-        
-        if (userRole === 'Organizer') {
+      // Store token and user
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+
+      // Redirect based on selected role or the role returned from backend
+      const userRole = data.user.role || formData.role;
+      
+      if (userRole === 'Organizer') {
           navigate('/organizer');
         } else if (userRole === 'Admin') {
           navigate('/admin');
@@ -139,9 +140,6 @@ const Login = () => {
           </button>
         </form>
         
-        <div className="mt-6 text-center text-sm text-gray-400">
-          <p>Mock login is active.</p>
-        </div>
       </motion.div>
     </div>
   );
