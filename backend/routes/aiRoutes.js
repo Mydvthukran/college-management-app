@@ -45,24 +45,15 @@ router.post('/chat', async (req, res) => {
   }
 });
 
-// Phase 3 Generative Tasks (Requires actual Gemini API Key in production)
-const { GoogleGenAI } = require('@google/genai');
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || 'MOCK_KEY' });
-
+// Phase 3 Offline Generative Tasks
 router.post('/generate-description', async (req, res) => {
   try {
     const { title, category } = req.body;
     
-    if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY_HERE') {
-      return res.json({ description: `Join us for the ultimate ${category} event: ${title}! It's going to be packed with learning and fun.` });
-    }
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: `Write a 2 paragraph exciting event description for a college ${category} titled "${title}".`,
-    });
+    // Offline rule-based description generation
+    const ruleBasedDescription = `Join us for the ultimate ${category} event: ${title}! It's going to be packed with learning, fun, and networking opportunities for everyone. Register now to secure your spot.`;
     
-    res.json({ description: response.text });
+    res.json({ description: ruleBasedDescription });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -72,16 +63,12 @@ router.post('/poster-suggestions', async (req, res) => {
   try {
     const { title, category } = req.body;
     
-    if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY_HERE') {
-      return res.json({ suggestions: "Use a dark background with neon highlights and bold typography." });
-    }
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: `Give me 3 brief visual design suggestions for a poster for a college ${category} titled "${title}".`,
-    });
+    // Offline rule-based poster suggestions
+    const suggestions = `1. Use a dark, sleek background with neon accents for a modern feel. 
+2. Make "${title}" the largest text on the poster using a bold, sans-serif font.
+3. Include an icon or abstract graphic representing ${category}.`;
     
-    res.json({ suggestions: response.text });
+    res.json({ suggestions });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

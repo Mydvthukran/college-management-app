@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import Lenis from 'lenis';
 
 import Home from './pages/Home';
+import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import TeacherDashboard from './pages/TeacherDashboard';
@@ -18,7 +19,8 @@ const AnimatedRoutes = () => {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<PageWrapper><Home /></PageWrapper>} />
+        <Route path="/" element={<PageWrapper><Login /></PageWrapper>} />
+        <Route path="/home" element={<PageWrapper><Home /></PageWrapper>} />
         <Route path="/dashboard" element={<PageWrapper><Dashboard /></PageWrapper>} />
         <Route path="/admin" element={<PageWrapper><AdminDashboard /></PageWrapper>} />
         <Route path="/teacher" element={<PageWrapper><TeacherDashboard /></PageWrapper>} />
