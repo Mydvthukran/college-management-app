@@ -91,6 +91,19 @@ router.get('/attendance', auth, requireRole('Teacher', 'Admin'), async (req, res
   }
 });
 
+// Batch Approve Duty Leaves
+router.put('/duty-leaves/batch-approve', auth, requireRole('Teacher'), async (req, res) => {
+  try {
+    const result = await DutyLeave.updateMany(
+      { status: 'Pending' },
+      { $set: { status: 'Approved', approvedBy: req.user.id } }
+    );
+    res.json({ message: `${result.modifiedCount} duty leave requests approved.` });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // 4. NAAC PDF Report Exporter
 router.get('/export-report/:eventId', auth, requireRole('Teacher', 'Admin', 'Organizer'), async (req, res) => {
   try {

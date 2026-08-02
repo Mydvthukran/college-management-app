@@ -24,6 +24,7 @@ const venueRoutes = require('./routes/venueRoutes');
 const judgingRoutes = require('./routes/judgingRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const announcementRoutes = require('./routes/announcementRoutes');
+const settingRoutes = require('./routes/settingRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
@@ -33,6 +34,7 @@ app.use('/api/venues', venueRoutes);
 app.use('/api/judging', judgingRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/announcements', announcementRoutes);
+app.use('/api/settings', settingRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'API is running smooth!' });

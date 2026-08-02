@@ -215,4 +215,69 @@ router.post('/:id/check-in', auth, requireRole('Organizer', 'Teacher', 'Admin', 
   }
 });
 
+const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
+
+// Generate Certificate
+router.get('/:id/certificate', auth, async (req, res) => {
+  try {
+    const event = await Event.findById(req.params.id);
+    if (!event) return res.status(404).json({ error: 'Event not found' });
+    if (!event.certificateGenerated) return res.status(400).json({ error: 'Certificates not yet available' });
+
+    // In a real app we would check if the user actually attended (checkedIn == true).
+    // For the sake of the demo, we allow them to download it if it's generated.
+    const reg = await Registration.findOne({ eventId: event._id, studentId: req.user.id });
+    if (!reg) return res.status(403).json({ error: 'You are not registered for this event.' });
+    if (!reg.checkedIn) return res.status(403).json({ error: 'You did not check in to this event.' });
+
+    // Generate PDF
+    const pdfDoc = await PDFDocument.create();
+    const page = pdfDoc.addPage([842, 595]); // A4 Landscape
+    const { width, height } = page.getSize();
+    const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const regularFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
+    // Draw Border
+    page.drawRectangle({
+      x: 20, y: 20, width: width - 40, height: height - 40,
+      borderColor: rgb(0.2, 0.4, 0.8),
+      borderWidth: 5,
+    });
+
+    page.drawText('Certificate of Participation', {
+      x: width / 2 - 250, y: height - 120,
+      size: 40, font: font, color: rgb(0.1, 0.1, 0.4),
+    });
+
+    page.drawText('This is to certify that', {
+      x: width / 2 - 120, y: height - 200,
+      size: 20, font: regularFont,
+    });
+
+    page.drawText(req.user.name.toUpperCase(), {
+      x: width / 2 - 180, y: height - 260,
+      size: 35, font: font, color: rgb(0.8, 0.2, 0.2),
+    });
+
+    page.drawText(`has successfully participated in ${event.title}`, {
+      x: width / 2 - 200, y: height - 340,
+      size: 20, font: regularFont,
+    });
+
+    page.drawText(`held on ${new Date(event.date).toLocaleDateString()}`, {
+      x: width / 2 - 100, y: height - 400,
+      size: 18, font: regularFont,
+    });
+
+    const pdfBytes = await pdfDoc.save();
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=Certificate_${event.title.replace(/\s+/g, '_')}.pdf`);
+    res.send(Buffer.from(pdfBytes));
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;
