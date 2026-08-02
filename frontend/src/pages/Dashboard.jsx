@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, CheckCircle, Clock, BookOpen, Bell, User as UserIcon, Award, TrendingUp } from 'lucide-react';
+import { Calendar, CheckCircle, Clock, BookOpen, Bell, User as UserIcon, Award, TrendingUp, X } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../utils/api';
@@ -14,6 +14,18 @@ const Dashboard = () => {
   const [recommended, setRecommended] = useState([]);
   const [loading, setLoading] = useState(true);
   const [registering, setRegistering] = useState(false);
+  
+  // Event Details Modal
+  const [selectedEventDetails, setSelectedEventDetails] = useState(null);
+
+  const handleDownloadCertificate = async (eventId, eventTitle) => {
+    try {
+      // Direct browser to the URL which will prompt a PDF download
+      window.open(`http://localhost:5000/api/events/${eventId}/certificate`, '_blank');
+    } catch (error) {
+      alert("Error downloading certificate");
+    }
+  };
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -155,7 +167,7 @@ const Dashboard = () => {
                     </p>
                   </div>
                   <button 
-                    onClick={() => alert(`Full details for ${event.title} will be available soon.`)}
+                    onClick={() => setSelectedEventDetails(event)}
                     className="px-4 py-2 bg-surface border border-white/10 rounded-lg text-sm hover:bg-white/5 transition-colors"
                   >
                     View Details
@@ -263,7 +275,7 @@ const Dashboard = () => {
                       <p className="text-xs text-gray-500">{new Date(cert.date).toLocaleDateString()}</p>
                     </div>
                     <button 
-                      onClick={() => alert('Certificate generation is currently disabled. Please contact your coordinator.')}
+                      onClick={() => handleDownloadCertificate(cert._id, cert.title)}
                       className="text-xs text-primary hover:underline font-medium"
                     >
                       Download
@@ -331,6 +343,63 @@ const Dashboard = () => {
             </div>
           </div>
         </motion.div>
+      )}
+      {/* Event Details Modal */}
+      {selectedEventDetails && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#1a1d24] border border-white/10 rounded-2xl p-6 w-full max-w-lg">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-primary bg-primary/10 px-2 py-1 rounded mb-2 inline-block">
+                  {selectedEventDetails.category}
+                </span>
+                <h2 className="text-2xl font-bold">{selectedEventDetails.title}</h2>
+              </div>
+              <button onClick={() => setSelectedEventDetails(null)} className="text-gray-400 hover:text-white"><X size={20}/></button>
+            </div>
+            
+            <div className="space-y-4 text-sm text-gray-300">
+              <p>{selectedEventDetails.description}</p>
+              
+              <div className="grid grid-cols-2 gap-4 mt-6">
+                <div className="glass-panel p-3 flex items-center gap-3">
+                  <Calendar className="text-blue-400" size={18} />
+                  <div>
+                    <p className="text-xs text-gray-500">Date</p>
+                    <p className="font-semibold text-white">{new Date(selectedEventDetails.date).toLocaleDateString()}</p>
+                  </div>
+                </div>
+                <div className="glass-panel p-3 flex items-center gap-3">
+                  <Clock className="text-purple-400" size={18} />
+                  <div>
+                    <p className="text-xs text-gray-500">Time</p>
+                    <p className="font-semibold text-white">{selectedEventDetails.startTime} - {selectedEventDetails.endTime}</p>
+                  </div>
+                </div>
+                <div className="glass-panel p-3 col-span-2 flex items-center gap-3">
+                  <Award className="text-amber-400" size={18} />
+                  <div>
+                    <p className="text-xs text-gray-500">Venue</p>
+                    <p className="font-semibold text-white">{selectedEventDetails.venue}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 p-4 bg-surface/50 border border-white/5 rounded-lg">
+                <p className="font-semibold text-white mb-2">Registration Status</p>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">Total Registered:</span>
+                  <span className="font-mono">{selectedEventDetails.registrationCount || 0} / {selectedEventDetails.capacityLimit || '∞'}</span>
+                </div>
+                {selectedEventDetails.capacityLimit && (
+                  <div className="w-full h-1.5 bg-background rounded-full mt-2 overflow-hidden">
+                    <div className="h-full bg-primary rounded-full" style={{width: `${((selectedEventDetails.registrationCount || 0) / selectedEventDetails.capacityLimit) * 100}%`}}></div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        </div>
       )}
     </div>
   );

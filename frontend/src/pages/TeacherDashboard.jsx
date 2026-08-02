@@ -45,6 +45,16 @@ const TeacherDashboard = () => {
     }
   };
 
+  const handleBatchApprove = async () => {
+    try {
+      const res = await api.put('/teacher/duty-leaves/batch-approve');
+      alert(res.message || 'Batch approval successful!');
+      fetchTeacherData();
+    } catch (error) {
+      alert("Error in batch approval: " + error.message);
+    }
+  };
+
   const tabs = [
     { id: 'duty-leave', label: 'Duty Leave', icon: <CheckCircle size={16} /> },
     { id: 'venues', label: 'Venue Booking', icon: <Map size={16} /> },
@@ -98,7 +108,7 @@ const TeacherDashboard = () => {
             <h2 className="text-xl font-bold">Pending Duty Leave Requests</h2>
             {dutyLeaves.length > 0 && (
               <button 
-                onClick={() => alert('Batch approval feature is coming soon. Please approve requests individually.')}
+                onClick={handleBatchApprove}
                 className="btn-primary flex items-center gap-2 py-2 text-sm"
               >
                 <CheckCircle size={16} /> Batch Approve All

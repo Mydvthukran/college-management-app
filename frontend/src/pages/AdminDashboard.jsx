@@ -18,18 +18,66 @@ const AdminDashboard = () => {
   const fetchAdminData = async () => {
     try {
       setLoading(true);
-      const [statsRes, approvalsRes, usersRes] = await Promise.all([
+      const [statsRes, approvalsRes, usersRes, settingsRes] = await Promise.all([
         api.get('/dashboard/admin-stats'),
         api.get('/events?status=Awaiting Faculty'),
-        api.get('/auth/users')
+        api.get('/auth/users'),
+        api.get('/settings').catch(() => ({})) // Fallback if settings route fails
       ]);
       setStats(statsRes);
       setPendingApprovals(approvalsRes);
       setUsers(usersRes);
+      
+      if (settingsRes && Object.keys(settingsRes).length > 0) {
+        setAllowRegistrations(settingsRes.allowNewRegistrations ?? true);
+        setAutoApprove(settingsRes.autoApproveEvents ?? false);
+      }
     } catch (error) {
       console.error("Error fetching admin data:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleUpdateSetting = async (key, value) => {
+    try {
+      await api.put('/settings', { key, value });
+    } catch (error) {
+      console.error("Error updating setting:", error);
+      alert("Failed to update setting. Please check the backend.");
+    }
+  };
+
+  const toggleAllowRegistrations = () => {
+    const newVal = !allowRegistrations;
+    setAllowRegistrations(newVal);
+    handleUpdateSetting('allowNewRegistrations', newVal);
+  };
+
+  const toggleAutoApprove = () => {
+    const newVal = !autoApprove;
+    setAutoApprove(newVal);
+    handleUpdateSetting('autoApproveEvents', newVal);
+  };
+
+  // Add User Modal State
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'Student', branch: '' });
+  const [addingUser, setAddingUser] = useState(false);
+
+  const handleAddUser = async (e) => {
+    e.preventDefault();
+    try {
+      setAddingUser(true);
+      await api.post('/auth/register', newUser);
+      setShowAddUserModal(false);
+      setNewUser({ name: '', email: '', password: '', role: 'Student', branch: '' });
+      fetchAdminData();
+      alert('User added successfully!');
+    } catch (error) {
+      alert("Error adding user: " + error.message);
+    } finally {
+      setAddingUser(false);
     }
   };
 
@@ -200,7 +248,7 @@ const AdminDashboard = () => {
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-bold">All Users</h2>
             <button 
-              onClick={() => alert("Please use the database seeding script or wait for the 'User Management' feature to be fully implemented.")}
+              onClick={() => setShowAddUserModal(true)}
               className="btn-primary py-2 text-sm"
             >
               + Add User
@@ -242,7 +290,7 @@ const AdminDashboard = () => {
               <div className="flex justify-between items-center py-2 border-b border-white/5">
                 <div><p className="text-sm font-medium">Allow New Registrations</p><p className="text-xs text-gray-500">Users can self-register</p></div>
                 <div 
-                  onClick={() => setAllowRegistrations(!allowRegistrations)}
+                  onClick={toggleAllowRegistrations}
                   className={`w-12 h-6 rounded-full relative cursor-pointer transition-colors ${allowRegistrations ? 'bg-green-500' : 'bg-surface border border-white/20'}`}
                 >
                   <div className={`absolute top-0.5 w-5 h-5 rounded-full transition-all ${allowRegistrations ? 'right-0.5 bg-white' : 'left-0.5 bg-gray-400'}`}></div>
@@ -251,7 +299,7 @@ const AdminDashboard = () => {
               <div className="flex justify-between items-center py-2 border-b border-white/5">
                 <div><p className="text-sm font-medium">Auto-Approve Events</p><p className="text-xs text-gray-500">Skip manual approval</p></div>
                 <div 
-                  onClick={() => setAutoApprove(!autoApprove)}
+                  onClick={toggleAutoApprove}
                   className={`w-12 h-6 rounded-full relative cursor-pointer transition-colors ${autoApprove ? 'bg-green-500' : 'bg-surface border border-white/20'}`}
                 >
                   <div className={`absolute top-0.5 w-5 h-5 rounded-full transition-all ${autoApprove ? 'right-0.5 bg-white' : 'left-0.5 bg-gray-400'}`}></div>
@@ -273,6 +321,50 @@ const AdminDashboard = () => {
             </div>
           </div>
         </motion.section>
+      )}
+
+      {/* Add User Modal */}
+      {showAddUserModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#1a1d24] border border-white/10 rounded-2xl p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold">Add New User</h2>
+              <button onClick={() => setShowAddUserModal(false)} className="text-gray-400 hover:text-white"><X size={20}/></button>
+            </div>
+            <form onSubmit={handleAddUser} className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-300 mb-1 block">Full Name</label>
+                <input required type="text" value={newUser.name} onChange={e => setNewUser({...newUser, name: e.target.value})} className="w-full bg-surface border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-primary/50" />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-300 mb-1 block">Email</label>
+                <input required type="email" value={newUser.email} onChange={e => setNewUser({...newUser, email: e.target.value})} className="w-full bg-surface border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-primary/50" />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-300 mb-1 block">Password</label>
+                <input required type="password" value={newUser.password} onChange={e => setNewUser({...newUser, password: e.target.value})} className="w-full bg-surface border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-primary/50" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-300 mb-1 block">Role</label>
+                  <select value={newUser.role} onChange={e => setNewUser({...newUser, role: e.target.value})} className="w-full bg-surface border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-primary/50">
+                    <option value="Student">Student</option>
+                    <option value="Teacher">Teacher</option>
+                    <option value="Organizer">Organizer</option>
+                    <option value="Admin">Admin</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-300 mb-1 block">Branch (Optional)</label>
+                  <input type="text" value={newUser.branch} onChange={e => setNewUser({...newUser, branch: e.target.value})} className="w-full bg-surface border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-primary/50" />
+                </div>
+              </div>
+              <button type="submit" disabled={addingUser} className="w-full btn-primary py-3 mt-2">
+                {addingUser ? 'Creating User...' : 'Create User'}
+              </button>
+            </form>
+          </motion.div>
+        </div>
       )}
     </div>
   );
