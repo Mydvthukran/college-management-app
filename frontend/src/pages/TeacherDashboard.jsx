@@ -232,7 +232,7 @@ const TeacherDashboard = () => {
                     className="btn-secondary w-full flex items-center justify-center gap-2 text-sm py-2"
                   >
                     <FileText size={18} /> Export PDF
-                  </a>
+                  </button>
                 </div>
               ))}
             </div>
