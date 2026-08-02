@@ -7,6 +7,7 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
 import Login from './pages/Login';
+import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import TeacherDashboard from './pages/TeacherDashboard';
@@ -23,6 +24,13 @@ const AnimatedRoutes = () => {
       <Routes location={location} key={location.pathname}>
         {/* Public route — Login */}
         <Route path="/" element={<PageWrapper><Login /></PageWrapper>} />
+
+        {/* Home summary — All authenticated users */}
+        <Route path="/home" element={
+          <ProtectedRoute allowedRoles={['Student', 'Club Lead', 'Organizer', 'Teacher', 'Admin']}>
+            <PageWrapper><Home /></PageWrapper>
+          </ProtectedRoute>
+        } />
 
         {/* Student dashboard — Students, Club Leads, and Admins */}
         <Route path="/dashboard" element={

@@ -33,19 +33,23 @@ const Navbar = () => {
       case 'Student':
       case 'Club Lead':
         return [
+          { path: '/home', label: 'Home' },
           { path: '/dashboard', label: 'Dashboard' },
         ];
       case 'Organizer':
         return [
+          { path: '/home', label: 'Home' },
           { path: '/organizer', label: 'Dashboard' },
           { path: '/judge', label: 'Judging Panel' },
         ];
       case 'Teacher':
         return [
+          { path: '/home', label: 'Home' },
           { path: '/teacher', label: 'Dashboard' },
         ];
       case 'Admin':
         return [
+          { path: '/home', label: 'Home' },
           { path: '/admin', label: 'Dashboard' },
           { path: '/dashboard', label: 'Student View' },
           { path: '/teacher', label: 'Faculty View' },
