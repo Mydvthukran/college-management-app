@@ -123,4 +123,30 @@ router.get('/admin-stats', auth, async (req, res) => {
   }
 });
 
+// Leaderboard (Top Active Students)
+router.get('/leaderboard', async (req, res) => {
+  try {
+    const leaderboard = await Registration.aggregate([
+      { $match: { checkedIn: true } },
+      { $group: { _id: '$studentId', events: { $sum: 1 } } },
+      { $sort: { events: -1 } },
+      { $limit: 10 }
+    ]);
+
+    // Populate student names
+    const populated = await User.populate(leaderboard, { path: '_id', select: 'name qrData branch' });
+    
+    const formatted = populated.map((item, index) => ({
+      rank: index + 1,
+      name: item._id?.name || 'Unknown',
+      branch: item._id?.branch || 'N/A',
+      events: item.events
+    })).filter(item => item.name !== 'Unknown');
+
+    res.json(formatted);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

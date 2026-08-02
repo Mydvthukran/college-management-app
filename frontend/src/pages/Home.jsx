@@ -11,21 +11,24 @@ const Home = () => {
   const [todayEvents, setTodayEvents] = useState([]);
   const [weekEvents, setWeekEvents] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
+  const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchHomeData = async () => {
       try {
-        const [statsRes, upcomingRes, annRes] = await Promise.all([
+        const [statsRes, upcomingRes, annRes, leaderRes] = await Promise.all([
           api.get('/dashboard/admin-stats'), // Using admin stats for campus overview
           api.get('/events/upcoming'),
-          api.get('/announcements')
+          api.get('/announcements'),
+          api.get('/dashboard/leaderboard')
         ]);
         
         setStats(statsRes);
         setTodayEvents(upcomingRes.today || []);
         setWeekEvents(upcomingRes.week || []);
         setAnnouncements(annRes || []);
+        setLeaderboard(leaderRes || []);
       } catch (error) {
         console.error("Error fetching home data:", error);
       } finally {
@@ -180,26 +183,24 @@ const Home = () => {
               <BarChart className="text-green-400" size={18} /> Top Active Students
             </h3>
             <div className="space-y-3">
-              {[
-                { name: 'Sneha Gupta', events: 14, rank: 1 },
-                { name: 'Rahul Sharma', events: 12, rank: 2 },
-                { name: 'Ananya Reddy', events: 11, rank: 3 },
-                { name: 'Priya Patel', events: 10, rank: 4 },
-                { name: 'Arjun Kumar', events: 8, rank: 5 },
-              ].map((student, i) => (
-                <div key={i} className="flex items-center justify-between p-2">
-                  <div className="flex items-center gap-3">
-                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                      i === 0 ? 'bg-amber-500/20 text-amber-400' :
-                      i === 1 ? 'bg-gray-300/20 text-gray-300' :
-                      i === 2 ? 'bg-orange-500/20 text-orange-400' :
-                      'bg-surface text-gray-500'
-                    }`}>{student.rank}</span>
-                    <span className="text-sm font-medium">{student.name}</span>
+              {leaderboard.length === 0 ? (
+                <p className="text-gray-500 italic text-sm">No active students yet.</p>
+              ) : (
+                leaderboard.map((student, i) => (
+                  <div key={i} className="flex items-center justify-between p-2">
+                    <div className="flex items-center gap-3">
+                      <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                        i === 0 ? 'bg-amber-500/20 text-amber-400' :
+                        i === 1 ? 'bg-gray-300/20 text-gray-300' :
+                        i === 2 ? 'bg-orange-500/20 text-orange-400' :
+                        'bg-surface text-gray-500'
+                      }`}>{student.rank}</span>
+                      <span className="text-sm font-medium">{student.name}</span>
+                    </div>
+                    <span className="text-xs text-gray-400">{student.events} events</span>
                   </div>
-                  <span className="text-xs text-gray-400">{student.events} events</span>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>

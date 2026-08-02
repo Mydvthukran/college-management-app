@@ -187,4 +187,32 @@ router.delete('/:id/register', auth, async (req, res) => {
   }
 });
 
+// QR Code Check-In (Organizer/Teacher/Admin)
+router.post('/:id/check-in', auth, requireRole('Organizer', 'Teacher', 'Admin', 'Club Lead'), async (req, res) => {
+  try {
+    const { studentId } = req.body;
+    if (!studentId) return res.status(400).json({ error: 'Student ID is required' });
+
+    // Check if registration exists
+    const reg = await Registration.findOne({ eventId: req.params.id, studentId });
+    if (!reg) {
+      return res.status(404).json({ error: 'Student is not registered for this event' });
+    }
+
+    if (reg.checkedIn) {
+      return res.status(400).json({ error: 'Student has already checked in' });
+    }
+
+    reg.checkedIn = true;
+    await reg.save();
+
+    // Populate student info for the response
+    const populatedReg = await Registration.findById(reg._id).populate('studentId', 'name branch qrData');
+
+    res.json({ message: 'Check-in successful', registration: populatedReg });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

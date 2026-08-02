@@ -1,77 +1,46 @@
 const express = require('express');
-const Sentiment = require('sentiment');
+const { auth, requireRole } = require('../middleware/auth');
 const router = express.Router();
 
-const sentimentAnalyzer = new Sentiment();
+// Rule-Based Offline AI Description Generator
+router.post('/generate-description', auth, requireRole('Organizer', 'Admin', 'Club Lead'), (req, res) => {
+  const { title, category, tags } = req.body;
 
-router.post('/chat', async (req, res) => {
-  try {
-    const { prompt } = req.body;
-    const lowerPrompt = prompt.toLowerCase();
-    
-    // Check if the prompt is asking for feedback sentiment analysis
-    if (lowerPrompt.includes('analyze') || lowerPrompt.includes('feedback')) {
-      const result = sentimentAnalyzer.analyze(prompt);
-      const score = result.score;
-      let summary = "Mixed feedback.";
-      if (score > 2) summary = "Highly positive feedback!";
-      else if (score < 0) summary = "Negative sentiment detected. Needs improvement.";
-      
-      return res.json({ 
-        response: `Feedback Analysis: Sentiment Score is ${score}. ${summary} Keywords: ${result.words.join(', ')}` 
-      });
-    }
-
-    let responseText = "I'm not sure about that. Could you ask me about upcoming events, hackathons, or event rules?";
-
-    // Offline rule-based logic
-    if (lowerPrompt.includes('robotics') || lowerPrompt.includes('hackathon')) {
-      responseText = "There's a Robotics Hackathon happening this Friday at 5 PM in the Main Auditorium. It matches your interests! Would you like to register?";
-    } else if (lowerPrompt.includes('rules') || lowerPrompt.includes('guidelines')) {
-      responseText = "For most events, you need to carry your dynamic QR code for entry. For hackathons, bring your own laptop and college ID.";
-    } else if (lowerPrompt.includes('clash') || lowerPrompt.includes('schedule')) {
-      responseText = "If you have a timetable clash, the system will warn you before registration. You can check your dashboard for your current schedule.";
-    } else if (lowerPrompt.includes('hi') || lowerPrompt.includes('hello')) {
-      responseText = "Hello! I am your offline Campus AI. Ask me about events, rules, or your schedule.";
-    }
-
-    // Small delay to simulate AI thinking
-    setTimeout(() => {
-      res.json({ response: responseText });
-    }, 800);
-
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  if (!title) {
+    return res.status(400).json({ error: 'Event title is required.' });
   }
-});
 
-// Phase 3 Offline Generative Tasks
-router.post('/generate-description', async (req, res) => {
-  try {
-    const { title, category } = req.body;
-    
-    // Offline rule-based description generation
-    const ruleBasedDescription = `Join us for the ultimate ${category} event: ${title}! It's going to be packed with learning, fun, and networking opportunities for everyone. Register now to secure your spot.`;
-    
-    res.json({ description: ruleBasedDescription });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+  // Pre-defined templates based on category
+  const templates = {
+    Workshop: "Join us for an immersive, hands-on workshop on {title}. This session is designed for individuals looking to upgrade their practical skills in {tags}. Led by experienced professionals, you will dive deep into industry-standard practices, participate in live exercises, and walk away with actionable knowledge. Perfect for students eager to bridge the gap between theory and real-world application.",
+    Hackathon: "Get ready for {title}, the ultimate test of innovation and endurance! Gather your team, brainstorm groundbreaking ideas, and code your way to glory. Focusing on themes like {tags}, this high-energy hackathon offers a platform to build, network, and showcase your talent to industry leaders. Will your team emerge victorious? Register now to find out!",
+    Seminar: "We are thrilled to announce {title}, an insightful seminar exploring the latest trends in {tags}. Featuring guest speakers and thought leaders, this event will provide a comprehensive overview of current challenges and future opportunities in the field. Don't miss this chance to expand your perspective and network with peers.",
+    Sports: "Time to sweat it out at {title}! Whether you're playing for the trophy or just for fun, this event celebrates sportsmanship, teamwork, and athleticism. Grab your gear, represent your team, and show us what you've got on the field. May the best team win!",
+    Cultural: "Experience the vibrant spirit of our campus at {title}! An evening filled with mesmerizing performances, music, dance, and art. Celebrating themes of {tags}, this cultural extravaganza is the perfect opportunity to unwind, cheer for your friends, and witness incredible student talent.",
+    Fest: "Welcome to {title}, the biggest college fest of the year! Expect days packed with thrilling competitions, spectacular pro-shows, and unforgettable memories. With a diverse range of activities covering {tags}, there's something for everyone. Be a part of the legacy!",
+    Competition: "Step up to the challenge at {title}! Prove your expertise in {tags} as you compete against the brightest minds on campus. With exciting prizes and bragging rights on the line, this is your moment to shine. Bring your A-game!"
+  };
 
-router.post('/poster-suggestions', async (req, res) => {
-  try {
-    const { title, category } = req.body;
-    
-    // Offline rule-based poster suggestions
-    const suggestions = `1. Use a dark, sleek background with neon accents for a modern feel. 
-2. Make "${title}" the largest text on the poster using a bold, sans-serif font.
-3. Include an icon or abstract graphic representing ${category}.`;
-    
-    res.json({ suggestions });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  const defaultTemplate = "Don't miss out on {title}! This exciting event is going to be packed with learning and fun. Focusing on {tags}, it's a great opportunity to get involved on campus, meet like-minded peers, and learn something new. Secure your spot today!";
+
+  let selectedTemplate = templates[category] || defaultTemplate;
+  
+  // Format tags string
+  let tagsString = 'related topics';
+  if (Array.isArray(tags) && tags.length > 0) {
+    if (tags.length === 1) tagsString = tags[0];
+    else if (tags.length === 2) tagsString = `${tags[0]} and ${tags[1]}`;
+    else tagsString = `${tags.slice(0, -1).join(', ')}, and ${tags[tags.length - 1]}`;
+  } else if (typeof tags === 'string' && tags.trim() !== '') {
+    tagsString = tags;
   }
+
+  // Replace placeholders
+  const generatedText = selectedTemplate
+    .replace('{title}', title.trim())
+    .replace('{tags}', tagsString);
+
+  res.json({ description: generatedText });
 });
 
 module.exports = router;
