@@ -25,45 +25,37 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      // In a real scenario, this would call our backend login endpoint
-      // const response = await fetch('http://localhost:5000/api/auth/login', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ email: formData.email, password: formData.password })
-      // });
-      // const data = await response.json();
-      
-      // If we strictly follow the user requirement to only have login logic:
-      // Let's use the actual endpoint
-      const response = await fetch('http://localhost:5000/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: formData.email, password: formData.password })
-      });
+      // Mock login logic as requested
+      // We simulate a network delay
+      await new Promise(resolve => setTimeout(resolve, 800));
 
-      const data = await response.json();
+      if (formData.email && formData.password) {
+        // Create a mock user based on the inputs
+        const mockUser = {
+          id: 'mock-id-1234',
+          name: formData.email.split('@')[0],
+          role: formData.role,
+          qrData: `NXC-${formData.role.substring(0, 3).toUpperCase()}-MOCK`
+        };
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Login failed');
-      }
+        // Store token and user
+        localStorage.setItem('token', 'mock-jwt-token-xyz');
+        localStorage.setItem('user', JSON.stringify(mockUser));
 
-      // Store token and user
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-
-      // Redirect based on selected role or the role returned from backend
-      const userRole = data.user.role || formData.role;
-      
-      if (userRole === 'Organizer') {
-        navigate('/organizer');
-      } else if (userRole === 'Admin') {
-        navigate('/admin');
-      } else if (userRole === 'Teacher') {
-        navigate('/teacher');
+        // Redirect based on selected role
+        const userRole = formData.role;
+        
+        if (userRole === 'Organizer') {
+          navigate('/organizer');
+        } else if (userRole === 'Admin') {
+          navigate('/admin');
+        } else if (userRole === 'Teacher') {
+          navigate('/teacher');
+        } else {
+          navigate('/dashboard'); // default to student dashboard
+        }
       } else {
-        navigate('/dashboard'); // default to student dashboard
+        throw new Error('Please enter ID/Email and password');
       }
     } catch (err) {
       setError(err.message);
