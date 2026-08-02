@@ -77,6 +77,17 @@ const Dashboard = () => {
     }
   };
 
+  const handleCancelRegistration = async (eventId) => {
+    if (!window.confirm("Are you sure you want to cancel your registration?")) return;
+    try {
+      await api.delete(`/events/${eventId}/register`);
+      await fetchDashboardData();
+      alert('Registration cancelled.');
+    } catch (error) {
+      alert(error.response?.data?.error || error.message || 'Failed to cancel registration');
+    }
+  };
+
   const submitTeamRegistration = (e) => {
     e.preventDefault();
     const emails = teamForm.teamMembersStr.split(',').map(e => e.trim()).filter(e => e);
@@ -190,12 +201,20 @@ const Dashboard = () => {
                       <Clock size={14} /> {event.venue}
                     </p>
                   </div>
-                  <button 
-                    onClick={() => setSelectedEventDetails(event)}
-                    className="px-4 py-2 bg-surface border border-white/10 rounded-lg text-sm hover:bg-white/5 transition-colors"
-                  >
-                    View Details
-                  </button>
+                  <div className="flex flex-col gap-2">
+                    <button 
+                      onClick={() => setSelectedEventDetails(event)}
+                      className="px-4 py-2 bg-surface border border-white/10 rounded-lg text-sm hover:bg-white/5 transition-colors whitespace-nowrap"
+                    >
+                      View Details
+                    </button>
+                    <button 
+                      onClick={() => handleCancelRegistration(event._id)}
+                      className="px-4 py-2 bg-red-500/10 text-red-400 border border-red-500/30 rounded-lg text-sm hover:bg-red-500 hover:text-white transition-colors whitespace-nowrap"
+                    >
+                      Cancel Registration
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

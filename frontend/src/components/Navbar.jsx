@@ -34,22 +34,26 @@ const Navbar = () => {
       case 'Club Lead':
         return [
           { path: '/home', label: 'Home' },
+          { path: '/leaderboard', label: 'Leaderboard' },
           { path: '/dashboard', label: 'Dashboard' },
         ];
       case 'Organizer':
         return [
           { path: '/home', label: 'Home' },
+          { path: '/leaderboard', label: 'Leaderboard' },
           { path: '/organizer', label: 'Dashboard' },
           { path: '/judge', label: 'Judging Panel' },
         ];
       case 'Teacher':
         return [
           { path: '/home', label: 'Home' },
+          { path: '/leaderboard', label: 'Leaderboard' },
           { path: '/teacher', label: 'Dashboard' },
         ];
       case 'Admin':
         return [
           { path: '/home', label: 'Home' },
+          { path: '/leaderboard', label: 'Leaderboard' },
           { path: '/admin', label: 'Dashboard' },
           { path: '/dashboard', label: 'Student View' },
           { path: '/teacher', label: 'Faculty View' },

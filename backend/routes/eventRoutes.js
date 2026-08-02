@@ -250,6 +250,27 @@ router.post('/:id/check-in', auth, requireRole('Organizer', 'Teacher', 'Admin', 
 
 const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
 
+// Approve/Reject Event (Admin)
+router.put('/:id/approve', auth, requireRole('Admin'), async (req, res) => {
+  try {
+    const { status } = req.body;
+    if (!['Approved', 'Rejected'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
+    
+    const event = await Event.findByIdAndUpdate(
+      req.params.id,
+      { approvalChainStatus: status },
+      { new: true }
+    );
+    
+    if (!event) return res.status(404).json({ error: 'Event not found' });
+    res.json(event);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Generate Certificate
 router.get('/:id/certificate', auth, async (req, res) => {
   try {

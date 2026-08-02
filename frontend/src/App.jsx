@@ -13,6 +13,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import TeacherDashboard from './pages/TeacherDashboard';
 import OrganizerDashboard from './pages/OrganizerDashboard';
 import JudgingPanel from './pages/JudgingPanel';
+import Leaderboard from './pages/Leaderboard';
 import Navbar from './components/Navbar';
 import OrbiHelper from './components/OrbiHelper';
 import ParticleBackground from './components/ParticleBackground';
@@ -67,6 +68,9 @@ const AnimatedRoutes = () => {
             <PageWrapper><JudgingPanel /></PageWrapper>
           </ProtectedRoute>
         } />
+
+        {/* Public Leaderboard */}
+        <Route path="/leaderboard" element={<PageWrapper><Leaderboard /></PageWrapper>} />
       </Routes>
     </AnimatePresence>
   );
