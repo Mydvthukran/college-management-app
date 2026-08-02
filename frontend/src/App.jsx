@@ -14,7 +14,7 @@ import TeacherDashboard from './pages/TeacherDashboard';
 import OrganizerDashboard from './pages/OrganizerDashboard';
 import JudgingPanel from './pages/JudgingPanel';
 import Navbar from './components/Navbar';
-import AIChatbot from './components/AIChatbot';
+import OrbiHelper from './components/OrbiHelper';
 import ParticleBackground from './components/ParticleBackground';
 
 const AnimatedRoutes = () => {
@@ -118,7 +118,7 @@ function App() {
             <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
               <AnimatedRoutes />
             </main>
-            <AIChatbot />
+            <OrbiHelper />
           </div>
         </div>
       </AuthProvider>
