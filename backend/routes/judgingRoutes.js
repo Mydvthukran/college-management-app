@@ -1,26 +1,26 @@
 const express = require('express');
 const JudgingScore = require('../models/JudgingScore');
 const router = express.Router();
+const { auth, requireRole } = require('../middleware/auth');
+const mongoose = require('mongoose');
 
 // 1. Submit a score from the Judging Panel
-router.post('/submit', async (req, res) => {
+router.post('/submit', auth, requireRole('Organizer', 'Admin', 'Teacher'), async (req, res) => {
   try {
-    const { eventId, judgeId, participantId, scores } = req.body;
+    const { eventId, registrationId, scores } = req.body;
+    const judgeId = req.user.id;
     
     const totalScore = scores.innovation + scores.presentation + scores.technicalDepth;
 
     const newScore = new JudgingScore({
       eventId,
       judgeId,
-      participantId,
+      registrationId,
       scores,
       totalScore
     });
 
     await newScore.save();
-
-    // If socket.io is configured globally, you can emit the new leaderboard here
-    // req.app.get('io').to(eventId).emit('scoreUpdated', { participantId, totalScore });
 
     res.status(201).json({ message: 'Score submitted successfully', score: newScore });
   } catch (error) {
@@ -35,13 +35,16 @@ router.post('/submit', async (req, res) => {
 router.get('/leaderboard/:eventId', async (req, res) => {
   try {
     const scores = await JudgingScore.aggregate([
-      { $match: { eventId: require('mongoose').Types.ObjectId(req.params.eventId) } },
-      { $group: { _id: '$participantId', totalPoints: { $sum: '$totalScore' } } },
+      { $match: { eventId: new mongoose.Types.ObjectId(req.params.eventId) } },
+      { $group: { _id: '$registrationId', totalPoints: { $sum: '$totalScore' } } },
       { $sort: { totalPoints: -1 } }
     ]);
 
-    // In a real app, you would $lookup the User collection to get participant names
-    res.json(scores);
+    // Lookup registration details (teamName or studentName)
+    const Registration = require('../models/Registration');
+    const populatedScores = await Registration.populate(scores, { path: '_id', select: 'teamName studentId', populate: { path: 'studentId', select: 'name' } });
+    
+    res.json(populatedScores);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

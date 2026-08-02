@@ -18,6 +18,11 @@ const Dashboard = () => {
   // Event Details Modal
   const [selectedEventDetails, setSelectedEventDetails] = useState(null);
 
+  // Team Registration Modal
+  const [showTeamModal, setShowTeamModal] = useState(false);
+  const [selectedTeamEvent, setSelectedTeamEvent] = useState(null);
+  const [teamForm, setTeamForm] = useState({ teamName: '', teamMembersStr: '' });
+
   const handleDownloadCertificate = async (eventId, eventTitle) => {
     try {
       // Direct browser to the URL which will prompt a PDF download
@@ -49,17 +54,36 @@ const Dashboard = () => {
     fetchDashboardData();
   }, []);
 
-  const handleRegister = async (eventId) => {
+  const handleRegister = async (eventId, isTeamEvent = false, teamData = null) => {
     try {
+      if (isTeamEvent && !teamData) {
+        // Just open the modal
+        const eventObj = recommended.find(e => e._id === eventId);
+        setSelectedTeamEvent(eventObj);
+        setShowTeamModal(true);
+        return;
+      }
+
       setRegistering(true);
-      await api.post(`/events/${eventId}/register`);
+      await api.post(`/events/${eventId}/register`, teamData || {});
       await fetchDashboardData(); // Refresh data after registration
+      setShowTeamModal(false);
+      setTeamForm({ teamName: '', teamMembersStr: '' });
       alert('Registered successfully!');
     } catch (error) {
-      alert(error.message || 'Failed to register');
+      alert(error.response?.data?.error || error.message || 'Failed to register');
     } finally {
       setRegistering(false);
     }
+  };
+
+  const submitTeamRegistration = (e) => {
+    e.preventDefault();
+    const emails = teamForm.teamMembersStr.split(',').map(e => e.trim()).filter(e => e);
+    handleRegister(selectedTeamEvent._id, true, { 
+      teamName: teamForm.teamName, 
+      teamMembers: emails 
+    });
   };
 
   const tabs = [
@@ -195,11 +219,11 @@ const Dashboard = () => {
                   <h3 className="text-lg font-bold mb-1">{item.title}</h3>
                   <p className="text-sm text-gray-400 mb-4 line-clamp-2">{item.description}</p>
                   <button 
-                    onClick={() => handleRegister(item._id)}
+                    onClick={() => handleRegister(item._id, item.isTeamEvent)}
                     disabled={registering}
                     className="text-primary text-sm font-semibold hover:underline disabled:opacity-50"
                   >
-                    {registering ? 'Registering...' : 'Register Now →'}
+                    {item.isTeamEvent ? (registering ? 'Registering...' : 'Register Team →') : (registering ? 'Registering...' : 'Register Now →')}
                   </button>
                 </div>
               ))}
@@ -398,6 +422,42 @@ const Dashboard = () => {
                 )}
               </div>
             </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Team Registration Modal */}
+      {showTeamModal && selectedTeamEvent && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#1a1d24] border border-white/10 rounded-2xl p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold">Register Team</h2>
+              <button onClick={() => setShowTeamModal(false)} className="text-gray-400 hover:text-white"><X size={20}/></button>
+            </div>
+            
+            <div className="mb-4 p-3 bg-primary/10 border border-primary/20 rounded-lg">
+              <p className="text-sm text-primary font-semibold">{selectedTeamEvent.title}</p>
+              <p className="text-xs text-gray-400 mt-1">Max Team Size: {selectedTeamEvent.maxTeamSize || 4} members (including you)</p>
+            </div>
+
+            <form onSubmit={submitTeamRegistration} className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-300 mb-1 block">Team Name</label>
+                <input required type="text" value={teamForm.teamName} onChange={e => setTeamForm({...teamForm, teamName: e.target.value})} className="w-full bg-surface border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-primary/50" placeholder="e.g. Code Ninjas" />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-300 mb-1 block">Team Members' Emails</label>
+                <textarea 
+                  value={teamForm.teamMembersStr} 
+                  onChange={e => setTeamForm({...teamForm, teamMembersStr: e.target.value})} 
+                  className="w-full bg-surface border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-primary/50 h-24 resize-none" 
+                  placeholder="Enter emails separated by commas (do not include your own email)"
+                />
+              </div>
+              <button type="submit" disabled={registering} className="w-full btn-primary py-3 mt-2">
+                {registering ? 'Validating & Registering...' : 'Complete Team Registration'}
+              </button>
+            </form>
           </motion.div>
         </div>
       )}

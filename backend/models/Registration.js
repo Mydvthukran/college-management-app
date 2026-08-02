@@ -7,6 +7,8 @@ const registrationSchema = new mongoose.Schema({
   checkInTime: { type: Date },
   certificateGenerated: { type: Boolean, default: false },
   certificateUrl: { type: String }, // Path or URL to the generated PDF
+  teamName: { type: String },
+  teamMembers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
 }, { timestamps: true });
 
 // Prevent duplicate registrations

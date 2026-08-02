@@ -31,6 +31,9 @@ const eventSchema = new mongoose.Schema({
   },
   posterUrl: { type: String }, // Cloudinary URL
   photoGallery: [{ type: String }], // Auto-collated photos for NAAC report
+  qrCodeData: { type: String }, // For check-ins
+  isTeamEvent: { type: Boolean, default: false },
+  maxTeamSize: { type: Number, default: 4 }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Event', eventSchema);

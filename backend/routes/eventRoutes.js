@@ -117,7 +117,8 @@ router.get('/:id', async (req, res) => {
 router.get('/:id/registrations', auth, async (req, res) => {
   try {
     const registrations = await Registration.find({ eventId: req.params.id })
-      .populate('studentId', 'name email branch');
+      .populate('studentId', 'name email branch')
+      .populate('teamMembers', 'name email branch');
     res.json(registrations);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -140,9 +141,11 @@ router.put('/:id/approve', auth, requireRole('Admin'), async (req, res) => {
   }
 });
 
-// Register for an event (Student) with Clash Check
+// Register for an event (Student) with Clash Check and Team Support
 router.post('/:id/register', auth, async (req, res) => {
   try {
+    const { teamName, teamMembers } = req.body; // teamMembers is an array of emails
+    
     const targetEvent = await Event.findById(req.params.id);
     if (!targetEvent) return res.status(404).json({ error: 'Event not found' });
 
@@ -154,7 +157,31 @@ router.post('/:id/register', auth, async (req, res) => {
       }
     }
 
-    // Clash logic check
+    // Team Logic
+    let memberIds = [];
+    if (targetEvent.isTeamEvent) {
+      if (!teamName) return res.status(400).json({ error: 'Team name is required for team events.' });
+      
+      let emails = [];
+      if (teamMembers && Array.isArray(teamMembers)) {
+        emails = teamMembers.map(email => email.trim().toLowerCase()).filter(e => e);
+      }
+      
+      if (emails.length > targetEvent.maxTeamSize - 1) { // -1 because the registering student is a member
+        return res.status(400).json({ error: `Maximum team size is ${targetEvent.maxTeamSize} (including you).` });
+      }
+
+      if (emails.length > 0) {
+        // Find users by email
+        const users = await User.find({ email: { $in: emails } });
+        if (users.length !== emails.length) {
+          return res.status(400).json({ error: 'One or more team member emails do not belong to a registered user.' });
+        }
+        memberIds = users.map(u => u._id);
+      }
+    }
+
+    // Clash logic check for the registering student
     const existingRegistrations = await Registration.find({ studentId: req.user.id }).populate('eventId');
     const hasClash = existingRegistrations.some(reg => {
       const e = reg.eventId;
@@ -166,7 +193,13 @@ router.post('/:id/register', auth, async (req, res) => {
 
     if (hasClash) return res.status(400).json({ error: 'Timetable clash detected with another registered event.' });
 
-    const newReg = new Registration({ studentId: req.user.id, eventId: req.params.id });
+    const newReg = new Registration({ 
+      studentId: req.user.id, 
+      eventId: req.params.id,
+      teamName: targetEvent.isTeamEvent ? teamName : undefined,
+      teamMembers: targetEvent.isTeamEvent ? memberIds : undefined
+    });
+    
     await newReg.save();
     res.status(201).json({ message: 'Registered successfully', registration: newReg });
   } catch (error) {
