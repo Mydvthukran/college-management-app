@@ -208,10 +208,27 @@ const TeacherDashboard = () => {
                     <h3 className="font-bold">{report.title}</h3>
                     <p className="text-sm text-gray-400">Date: {new Date(report.date).toLocaleDateString()} • {report.category}</p>
                   </div>
-                  <a 
-                    href={`https://college-management-app-guqk.onrender.com/api/teacher/export-report/${report._id}`}
-                    target="_blank"
-                    rel="noreferrer"
+                  <button 
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      try {
+                        const response = await fetch(`https://college-management-app-guqk.onrender.com/api/teacher/export-report/${report._id}`, {
+                          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                        });
+                        if (!response.ok) throw new Error('Download failed');
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `Report_${report._id}.pdf`;
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                      } catch (error) {
+                        alert("Error exporting report");
+                      }
+                    }}
                     className="btn-secondary w-full flex items-center justify-center gap-2 text-sm py-2"
                   >
                     <FileText size={18} /> Export PDF

@@ -25,8 +25,23 @@ const Dashboard = () => {
 
   const handleDownloadCertificate = async (eventId, eventTitle) => {
     try {
-      // Direct browser to the URL which will prompt a PDF download
-      window.open(`https://college-management-app-guqk.onrender.com/api/events/${eventId}/certificate`, '_blank');
+      const response = await fetch(`https://college-management-app-guqk.onrender.com/api/events/${eventId}/certificate`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (!response.ok) throw new Error('Download failed');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${eventTitle}_Certificate.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
     } catch (error) {
       alert("Error downloading certificate");
     }
