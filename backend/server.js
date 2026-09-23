@@ -12,31 +12,43 @@ app.use(express.json());
 const PORT = Number(process.env.PORT || 5000);
 const MONGO_URI = process.env.MONGO_URI;
 
-if (!MONGO_URI) {
-  console.error('MONGO_URI is missing. Configure it in the deployment environment.');
-}
-
 mongoose.set('bufferCommands', false);
+
+let databaseMode = 'disconnected';
 
 const connectDatabase = async () => {
   if (!MONGO_URI) {
-    throw new Error('MONGO_URI is not configured.');
+    console.error('MONGO_URI is missing. Starting without database.');
+    return;
   }
 
-  await mongoose.connect(MONGO_URI, {
-    serverSelectionTimeoutMS: 8000,
-    connectTimeoutMS: 8000,
-    socketTimeoutMS: 15000,
-  });
+  try {
+    await mongoose.connect(MONGO_URI, {
+      serverSelectionTimeoutMS: 8000,
+      connectTimeoutMS: 8000,
+      socketTimeoutMS: 15000,
+    });
 
-  console.log('MongoDB connected successfully.');
+    databaseMode = 'mongodb';
+    console.log('MongoDB connected successfully.');
+  } catch (error) {
+    databaseMode = 'disconnected';
+    console.error('MongoDB connection failed:', error.message);
+    console.warn('API will remain available. Test admin login can be used for UI recovery.');
+  }
 };
 
 mongoose.connection.on('error', (error) => {
+  databaseMode = 'disconnected';
   console.error('MongoDB error:', error.message);
 });
 
+mongoose.connection.on('connected', () => {
+  databaseMode = 'mongodb';
+});
+
 mongoose.connection.on('disconnected', () => {
+  databaseMode = 'disconnected';
   console.error('MongoDB disconnected.');
 });
 
@@ -66,23 +78,14 @@ app.get('/api/health', (req, res) => {
   res.status(connected ? 200 : 503).json({
     status: connected ? 'ok' : 'database_unavailable',
     database: connected ? 'mongodb' : 'disconnected',
+    testAdminAvailable: !connected,
   });
 });
 
-const startServer = async () => {
-  try {
-    await connectDatabase();
-
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
-  } catch (error) {
-    console.error('Server startup failed:', error.message);
-    process.exit(1);
-  }
-};
-
-startServer();
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  connectDatabase();
+});
 
 const shutdown = async () => {
   try {
