@@ -1,13 +1,18 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 const AuthContext = createContext(null);
 
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  'https://college-management-app-guqk.onrender.com/api';
+
 export const useAuth = () => {
   const context = useContext(AuthContext);
+
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
+
   return context;
 };
 
@@ -16,10 +21,10 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // On mount, check localStorage for existing session
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
+
     if (storedToken && storedUser) {
       try {
         setToken(storedToken);
@@ -29,17 +34,18 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('user');
       }
     }
+
     setIsLoading(false);
   }, []);
 
   const login = async (email, password) => {
-    const response = await fetch('https://college-management-app-guqk.onrender.com/api/auth/login', {
+    const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
 
-    const data = await response.json();
+    const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
       throw new Error(data.error || 'Login failed');
@@ -60,10 +66,12 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
-  const isAuthenticated = !!token && !!user;
+  const isAuthenticated = Boolean(token && user);
 
   return (
-    <AuthContext.Provider value={{ user, token, isAuthenticated, isLoading, login, logout }}>
+    <AuthContext.Provider
+      value={{ user, token, isAuthenticated, isLoading, login, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );
